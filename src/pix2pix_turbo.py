@@ -128,6 +128,23 @@ class Pix2Pix_Turbo(torch.nn.Module):
                 _sd_unet[k] = sd["state_dict_unet"][k]
             unet.load_state_dict(_sd_unet)
 
+            # Added tlp
+            target_modules_vae = ["conv1", "conv2", "conv_in", "conv_shortcut", "conv", "conv_out",
+                "skip_conv_1", "skip_conv_2", "skip_conv_3", "skip_conv_4",
+                "to_k", "to_q", "to_v", "to_out.0",
+            ]
+            target_modules_unet = [
+                "to_k", "to_q", "to_v", "to_out.0", "conv", "conv1", "conv2", "conv_shortcut", "conv_out",
+                "proj_in", "proj_out", "ff.net.2", "ff.net.0.proj"
+            ]
+            unet_lora_config = LoraConfig(r=lora_rank_unet, init_lora_weights="gaussian",
+                target_modules=target_modules_unet
+            )
+            self.lora_rank_unet = lora_rank_unet
+            self.lora_rank_vae = lora_rank_vae
+            self.target_modules_vae = target_modules_vae
+            self.target_modules_unet = target_modules_unet
+
         elif pretrained_name is None and pretrained_path is None:
             print("Initializing model with random weights")
             torch.nn.init.constant_(vae.decoder.skip_conv_1.weight, 1e-5)
